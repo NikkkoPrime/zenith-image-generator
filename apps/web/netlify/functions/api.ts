@@ -5,8 +5,8 @@
 import { handle } from 'hono/netlify'
 import { createApp } from '../../../api/src/app'
 
-const corsOrigins = Netlify.env.get('CORS_ORIGINS')
-  ? Netlify.env.get('CORS_ORIGINS')!.split(',').map((origin) => origin.trim())
+const corsOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((origin: string) => origin.trim())
   : ['http://localhost:5173', 'http://localhost:3000']
 
 const app = createApp({ corsOrigins })
