@@ -6,11 +6,10 @@
  */
 
 import { handle } from 'hono/vercel'
-import type { PageConfig } from 'next'
 import { createApp } from '../../api/src/app'
 
 // Use Edge Runtime for better performance
-export const config: PageConfig = {
+export const config = {
   runtime: 'edge',
 }
 
