@@ -15,10 +15,11 @@ const DB_VERSION = 1
 const BLOBS_STORE = 'blobs'
 const META_STORE = 'meta'
 
-// Storage limits
+// Storage limits - optimized for 2K/4K images
 export const STORAGE_LIMITS = {
-  MAX_IMAGES: 100,
-  WARNING_THRESHOLD: 80, // Warn at 80 images
+  MAX_IMAGES: 500,              // Maximum image count
+  MAX_STORAGE_MB: 4096,         // Maximum storage: 4GB
+  WARNING_THRESHOLD_PERCENT: 80, // Warn at 80%
 }
 
 interface BlobMeta {
@@ -58,12 +59,19 @@ async function getDB(): Promise<IDBPDatabase> {
 export async function storeBlob(id: string, blob: Blob): Promise<string | null> {
   try {
     const db = await getDB()
+    const maxStorageBytes = STORAGE_LIMITS.MAX_STORAGE_MB * 1024 * 1024
 
-    // Check if we need to cleanup old blobs first
-    const count = await getBlobCount()
-    if (count >= STORAGE_LIMITS.MAX_IMAGES) {
-      // Remove oldest accessed blob to make room
-      await removeOldestBlob()
+    // Check if we need to cleanup old blobs first (dual limit: count OR size)
+    let count = await getBlobCount()
+    let totalSize = await getTotalStorageSize()
+
+    // Remove oldest blobs until we have room
+    while (count >= STORAGE_LIMITS.MAX_IMAGES || totalSize + blob.size > maxStorageBytes) {
+      const removed = await removeOldestBlob()
+      if (!removed) break // No more blobs to remove
+      // Re-fetch after removal
+      count = await getBlobCount()
+      totalSize = await getTotalStorageSize()
     }
 
     // Store the blob
@@ -176,23 +184,31 @@ export async function getStorageInfo(): Promise<{
   count: number
   totalSizeMB: number
   maxImages: number
+  maxStorageMB: number
   isNearLimit: boolean
 }> {
   const count = await getBlobCount()
   const totalSize = await getTotalStorageSize()
+  const totalSizeMB = Math.round((totalSize / 1024 / 1024) * 10) / 10
+
+  const countPercent = (count / STORAGE_LIMITS.MAX_IMAGES) * 100
+  const sizePercent = (totalSizeMB / STORAGE_LIMITS.MAX_STORAGE_MB) * 100
 
   return {
     count,
-    totalSizeMB: Math.round((totalSize / 1024 / 1024) * 10) / 10,
+    totalSizeMB,
     maxImages: STORAGE_LIMITS.MAX_IMAGES,
-    isNearLimit: count >= STORAGE_LIMITS.WARNING_THRESHOLD,
+    maxStorageMB: STORAGE_LIMITS.MAX_STORAGE_MB,
+    isNearLimit: countPercent >= STORAGE_LIMITS.WARNING_THRESHOLD_PERCENT ||
+                 sizePercent >= STORAGE_LIMITS.WARNING_THRESHOLD_PERCENT,
   }
 }
 
 /**
  * Remove the oldest accessed blob (LRU eviction)
+ * Returns true if a blob was removed, false otherwise
  */
-async function removeOldestBlob(): Promise<void> {
+async function removeOldestBlob(): Promise<boolean> {
   try {
     const db = await getDB()
     const tx = db.transaction(META_STORE, 'readonly')
@@ -204,9 +220,12 @@ async function removeOldestBlob(): Promise<void> {
       const oldestId = cursor.value.id
       await deleteBlob(oldestId)
       console.log(`Removed oldest blob: ${oldestId}`)
+      return true
     }
+    return false
   } catch (e) {
     console.error('Failed to remove oldest blob:', e)
+    return false
   }
 }
 
