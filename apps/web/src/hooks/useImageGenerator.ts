@@ -49,8 +49,12 @@ export function useImageGenerator() {
   const [steps, setSteps] = useState(() => loadSettings().steps ?? 9)
   const [loading, setLoading] = useState(false)
   const [imageDetails, setImageDetails] = useState<ImageDetails | null>(() => {
-    const stored = localStorage.getItem(IMAGE_DETAILS_KEY)
-    return stored ? JSON.parse(stored) : null
+    try {
+      const stored = localStorage.getItem(IMAGE_DETAILS_KEY)
+      return stored ? JSON.parse(stored) : null
+    } catch {
+      return null
+    }
   })
   const [status, setStatus] = useState('Ready.')
   const [elapsed, setElapsed] = useState(0)
@@ -240,8 +244,10 @@ export function useImageGenerator() {
           const apiUrl = import.meta.env.VITE_API_URL || ''
           const proxyUrl = `${apiUrl}/api/proxy-image?url=${encodeURIComponent(details.url)}`
           const response = await fetch(proxyUrl)
-          const blob = await response.blob()
-          details.url = URL.createObjectURL(blob)
+          if (response.ok) {
+            const blob = await response.blob()
+            details.url = URL.createObjectURL(blob)
+          }
         } catch (e) {
           console.warn('Failed to cache HF image:', e)
         }

@@ -164,7 +164,7 @@ export function PromptCard({
                 <Switch
                   id="uhd"
                   checked={uhd}
-                  className={`data-[state=unchecked]:[&>span]:bg-zinc-500 data-[state=checked]:[&>span]:bg-yellow-400 uhd ? "bg-orange-500" : "border-xl border-zinc-800"`}
+                  className="data-[state=unchecked]:[&>span]:bg-zinc-500 data-[state=checked]:[&>span]:bg-yellow-400"
                   onCheckedChange={handleUhdToggle}
                 />
               </div>

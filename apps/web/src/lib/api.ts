@@ -53,6 +53,37 @@ function parseErrorResponse(data: unknown): ApiErrorInfo {
   return { message: 'Unknown error' }
 }
 
+/** Extended error with status and code */
+interface ApiError extends Error {
+  status?: number
+  code?: string
+}
+
+/** Generic fetch wrapper with error handling */
+async function apiRequest<T>(
+  url: string,
+  options: RequestInit
+): Promise<T> {
+  const response = await fetch(url, options)
+
+  let data: unknown
+  try {
+    data = await response.json()
+  } catch {
+    throw new Error('Invalid response from server')
+  }
+
+  if (!response.ok) {
+    const errorInfo = parseErrorResponse(data)
+    const error = new Error(getErrorMessage(errorInfo)) as ApiError
+    error.status = response.status
+    error.code = errorInfo.code
+    throw error
+  }
+
+  return data as T
+}
+
 /** Get user-friendly error message based on error code */
 export function getErrorMessage(errorInfo: ApiErrorInfo): string {
   const { code, message, details } = errorInfo
@@ -106,13 +137,11 @@ export interface AuthToken {
 async function generateImageSingle(
   options: GenerateOptions,
   token: string | null
-): Promise<ApiResponse<GenerateSuccessResponse>> {
+): Promise<GenerateSuccessResponse> {
   const { provider, prompt, negativePrompt, width, height, steps, seed, model } = options
 
   const providerConfig = PROVIDER_CONFIGS[provider]
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  }
+  const headers: HeadersInit = { 'Content-Type': 'application/json' }
 
   if (token && providerConfig) {
     headers[providerConfig.authHeader] = token
@@ -129,27 +158,11 @@ async function generateImageSingle(
     seed,
   }
 
-  const response = await fetch(`${API_URL}/api/generate`, {
+  return apiRequest<GenerateSuccessResponse>(`${API_URL}/api/generate`, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
   })
-
-  const data = await response.json()
-
-  if (!response.ok) {
-    const errorInfo = parseErrorResponse(data)
-    // Throw with status for quota detection
-    const error = new Error(getErrorMessage(errorInfo)) as Error & {
-      status?: number
-      code?: string
-    }
-    error.status = response.status
-    error.code = errorInfo.code
-    throw error
-  }
-
-  return { success: true, data: data as GenerateSuccessResponse }
 }
 
 /**
@@ -177,7 +190,8 @@ export async function generateImage(
   // No tokens but auth not required - try anonymous
   if (allTokens.length === 0) {
     try {
-      return await generateImageSingle(options, null)
+      const data = await generateImageSingle(options, null)
+      return { success: true, data }
     } catch (err) {
       return {
         success: false,
@@ -196,7 +210,8 @@ export async function generateImage(
       // Try anonymous if provider allows it
       if (!providerConfig.requiresAuth) {
         try {
-          return await generateImageSingle(options, null)
+          const data = await generateImageSingle(options, null)
+          return { success: true, data }
         } catch (err) {
           return {
             success: false,
@@ -211,7 +226,8 @@ export async function generateImage(
     }
 
     try {
-      return await generateImageSingle(options, nextToken)
+      const data = await generateImageSingle(options, nextToken)
+      return { success: true, data }
     } catch (err) {
       if (isQuotaError(err)) {
         markTokenExhausted(provider, nextToken)
@@ -238,37 +254,15 @@ async function upscaleImageSingle(
   url: string,
   scale: number,
   token: string | null
-): Promise<ApiResponse<UpscaleResponse>> {
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  }
+): Promise<UpscaleResponse> {
+  const headers: HeadersInit = { 'Content-Type': 'application/json' }
+  if (token) headers['X-HF-Token'] = token
 
-  if (token) {
-    headers['X-HF-Token'] = token
-  }
-
-  const body: UpscaleRequest = { url, scale }
-
-  const response = await fetch(`${API_URL}/api/upscale`, {
+  return apiRequest<UpscaleResponse>(`${API_URL}/api/upscale`, {
     method: 'POST',
     headers,
-    body: JSON.stringify(body),
+    body: JSON.stringify({ url, scale } as UpscaleRequest),
   })
-
-  const data = await response.json()
-
-  if (!response.ok) {
-    const errorInfo = parseErrorResponse(data)
-    const error = new Error(getErrorMessage(errorInfo)) as Error & {
-      status?: number
-      code?: string
-    }
-    error.status = response.status
-    error.code = errorInfo.code
-    throw error
-  }
-
-  return { success: true, data: data as UpscaleResponse }
 }
 
 /**
@@ -285,7 +279,8 @@ export async function upscaleImage(
   // No tokens - try anonymous (HuggingFace allows anonymous)
   if (allTokens.length === 0) {
     try {
-      return await upscaleImageSingle(url, scale, null)
+      const data = await upscaleImageSingle(url, scale, null)
+      return { success: true, data }
     } catch (err) {
       return {
         success: false,
@@ -302,7 +297,8 @@ export async function upscaleImage(
     // All tokens exhausted - try anonymous
     if (!nextToken) {
       try {
-        return await upscaleImageSingle(url, scale, null)
+        const data = await upscaleImageSingle(url, scale, null)
+        return { success: true, data }
       } catch (err) {
         return {
           success: false,
@@ -312,7 +308,8 @@ export async function upscaleImage(
     }
 
     try {
-      return await upscaleImageSingle(url, scale, nextToken)
+      const data = await upscaleImageSingle(url, scale, nextToken)
+      return { success: true, data }
     } catch (err) {
       if (isQuotaError(err)) {
         markTokenExhausted('huggingface', nextToken)
@@ -370,47 +367,21 @@ function getLLMTokenProvider(
 async function optimizePromptSingle(
   options: OptimizeOptions,
   token: string | null
-): Promise<ApiResponse<OptimizeResponse>> {
+): Promise<OptimizeResponse> {
   const { prompt, provider = 'pollinations', lang = 'en', model, systemPrompt } = options
 
   const providerConfig = LLM_PROVIDER_CONFIGS[provider]
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  }
+  const headers: HeadersInit = { 'Content-Type': 'application/json' }
 
-  // Add auth header if provider requires it and token is provided
   if (token && providerConfig?.needsAuth && providerConfig?.authHeader) {
     headers[providerConfig.authHeader] = token
   }
 
-  const body: OptimizeRequest = {
-    prompt,
-    provider,
-    lang,
-    model,
-    systemPrompt,
-  }
-
-  const response = await fetch(`${API_URL}/api/optimize`, {
+  return apiRequest<OptimizeResponse>(`${API_URL}/api/optimize`, {
     method: 'POST',
     headers,
-    body: JSON.stringify(body),
+    body: JSON.stringify({ prompt, provider, lang, model, systemPrompt } as OptimizeRequest),
   })
-
-  const data = await response.json()
-
-  if (!response.ok) {
-    const errorInfo = parseErrorResponse(data)
-    const error = new Error(getErrorMessage(errorInfo)) as Error & {
-      status?: number
-      code?: string
-    }
-    error.status = response.status
-    error.code = errorInfo.code
-    throw error
-  }
-
-  return { success: true, data: data as OptimizeResponse }
 }
 
 /**
@@ -434,7 +405,8 @@ export async function optimizePrompt(
   // Provider doesn't need auth (e.g., pollinations)
   if (!providerConfig?.needsAuth) {
     try {
-      return await optimizePromptSingle(options, null)
+      const data = await optimizePromptSingle(options, null)
+      return { success: true, data }
     } catch (err) {
       return {
         success: false,
@@ -465,7 +437,8 @@ export async function optimizePrompt(
     }
 
     try {
-      return await optimizePromptSingle(options, nextToken)
+      const data = await optimizePromptSingle(options, nextToken)
+      return { success: true, data }
     } catch (err) {
       if (isQuotaError(err) && tokenProvider) {
         markTokenExhausted(tokenProvider, nextToken)
@@ -490,29 +463,13 @@ export async function optimizePrompt(
  * Uses Pollinations AI with openai-fast model (free, no auth required)
  */
 export async function translatePrompt(prompt: string): Promise<ApiResponse<TranslateResponse>> {
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  }
-
   try {
-    const response = await fetch(`${API_URL}/api/translate`, {
+    const data = await apiRequest<TranslateResponse>(`${API_URL}/api/translate`, {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt }),
     })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      const errorInfo = parseErrorResponse(data)
-      return {
-        success: false,
-        error: getErrorMessage(errorInfo),
-        errorInfo,
-      }
-    }
-
-    return { success: true, data: data as TranslateResponse }
+    return { success: true, data }
   } catch (err) {
     return {
       success: false,
@@ -528,29 +485,12 @@ export async function createVideoTask(
   options: VideoGenerateRequest,
   token: string
 ): Promise<ApiResponse<{ taskId: string; status: string }>> {
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    'X-API-Key': token,
-  }
-
   try {
-    const response = await fetch(`${API_URL}/api/video/generate`, {
+    const data = await apiRequest<{ taskId: string; status: string }>(`${API_URL}/api/video/generate`, {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': token },
       body: JSON.stringify(options),
     })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      const errorInfo = parseErrorResponse(data)
-      return {
-        success: false,
-        error: getErrorMessage(errorInfo),
-        errorInfo,
-      }
-    }
-
     return { success: true, data }
   } catch (err) {
     return {
@@ -567,27 +507,11 @@ export async function getVideoTaskStatus(
   taskId: string,
   token: string
 ): Promise<ApiResponse<VideoTaskResponse>> {
-  const headers: HeadersInit = {
-    'X-API-Key': token,
-  }
-
   try {
-    const response = await fetch(`${API_URL}/api/video/status/${taskId}`, {
+    const data = await apiRequest<VideoTaskResponse>(`${API_URL}/api/video/status/${taskId}`, {
       method: 'GET',
-      headers,
+      headers: { 'X-API-Key': token },
     })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      const errorInfo = parseErrorResponse(data)
-      return {
-        success: false,
-        error: getErrorMessage(errorInfo),
-        errorInfo,
-      }
-    }
-
     return { success: true, data }
   } catch (err) {
     return {
